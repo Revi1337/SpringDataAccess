@@ -3,11 +3,11 @@ package access.repository;
 
 import access.domain.Member;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -26,9 +26,19 @@ class MemberRepositoryV0Test {
         // read
         Member findMember = memberRepositoryV0.findById(member.getMemberId());
         log.info("findMember = {}", findMember);
-        log.info("member == findMembe {}", member == findMember);
-        log.info("member.equals(findMembe) {}", member.equals(findMember));
+        log.info("member == findMember {}", member == findMember);
+        log.info("member.equals(findMember) {}", member.equals(findMember));
         assertThat(findMember).isEqualTo(member);
+
+        // update money: 10000 -> 20000;
+        memberRepositoryV0.update(member.getMemberId(), 20000);
+        Member updateMember = memberRepositoryV0.findById(member.getMemberId());
+        assertThat(updateMember.getMoney()).isEqualTo(20000);
+
+        // delete
+        memberRepositoryV0.delete(member.getMemberId());
+        assertThatThrownBy(() -> memberRepositoryV0.findById(member.getMemberId()))
+                .isInstanceOf(NoSuchElementException.class);
     }
 
 }
