@@ -1,5 +1,6 @@
 package access.springdataaccess_1.connection;
 
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,13 +27,27 @@ public class ConnectionTest {
 
     @Test
     @DisplayName("""
-            스프링이 제공하는 DriverManagerDataSource 를 통해 커넥션을 획득
+            스프링이 제공하는 DriverManagerDataSource 를 통해 커넥션을 획득 (DataSource 의 구현체)
             --> DataSource 를 가져오는 과정에서만 DB 의 설정 정보를 제공하며 커넥션을 사용할때는 DB 설정 정보를 넘겨주지 않아도 된다.
             --> 설정과 사용을 분리
     """)
     public void dataSourceDriverManager() throws SQLException {
         DataSource driverManagerDataSource = new DriverManagerDataSource(URL, USER, PASSWORD);
         useDataSource(driverManagerDataSource);
+    }
+
+    @Test
+    @DisplayName("HikariCP 로 커넥션 풀링 (DataSource 의 구현체)")
+    public void dataSourceConnectionPool() throws SQLException, InterruptedException {
+        HikariDataSource hikariDataSource = new HikariDataSource();
+        hikariDataSource.setJdbcUrl(URL);
+        hikariDataSource.setUsername(USER);
+        hikariDataSource.setPassword(PASSWORD);
+        hikariDataSource.setMaximumPoolSize(10);
+        hikariDataSource.setPoolName("MyPool");
+
+        useDataSource(hikariDataSource);
+        Thread.sleep(2000);
     }
 
     private void useDataSource(DataSource dataSource) throws SQLException {
