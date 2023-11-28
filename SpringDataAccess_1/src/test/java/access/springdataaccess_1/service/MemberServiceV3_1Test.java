@@ -1,8 +1,8 @@
-package access.service;
+package access.springdataaccess_1.service;
 
 
-import access.domain.Member;
-import access.repository.MemberRepositoryV3;
+import access.springdataaccess_1.domain.Member;
+import access.springdataaccess_1.repository.MemberRepositoryV3;
 import access.springdataaccess_1.connection.ConnectionConst;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -22,14 +22,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * 트랜잭션 - 트랜잭션 매니저
  */
 @Slf4j
-class MemberServiceV3_2Test {
+class MemberServiceV3_1Test {
 
     public static final String MEMBER_A = "memberA";
     public static final String MEMBER_B = "memberB";
     public static final String MEMBER_EX = "ex";
 
     private MemberRepositoryV3 memberRepository;
-    private MemberServiceV3_2 memberService;
+    private MemberServiceV3_1 memberService;
 
     @BeforeEach
     public void before() {
@@ -38,7 +38,7 @@ class MemberServiceV3_2Test {
         );
         this.memberRepository = new MemberRepositoryV3(dataSource);
         PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
-        this.memberService = new MemberServiceV3_2(this.memberRepository, transactionManager);
+        this.memberService = new MemberServiceV3_1(this.memberRepository, transactionManager);
     }
 
     @AfterEach

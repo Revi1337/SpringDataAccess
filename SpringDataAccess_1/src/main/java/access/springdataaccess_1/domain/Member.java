@@ -1,4 +1,4 @@
-package access.domain;
+package access.springdataaccess_1.domain;
 
 import lombok.Data;
 

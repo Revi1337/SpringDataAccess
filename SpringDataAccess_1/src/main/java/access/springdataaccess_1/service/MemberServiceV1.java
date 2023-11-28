@@ -1,7 +1,7 @@
-package access.service;
+package access.springdataaccess_1.service;
 
-import access.domain.Member;
-import access.repository.MemberRepositoryV1;
+import access.springdataaccess_1.domain.Member;
+import access.springdataaccess_1.repository.MemberRepositoryV1;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.SQLException;

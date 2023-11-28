@@ -1,6 +1,6 @@
-package access.repository;
+package access.springdataaccess_1.repository;
 
-import access.domain.Member;
+import access.springdataaccess_1.domain.Member;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.support.JdbcUtils;

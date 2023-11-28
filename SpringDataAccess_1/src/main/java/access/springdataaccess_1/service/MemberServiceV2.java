@@ -1,7 +1,7 @@
-package access.service;
+package access.springdataaccess_1.service;
 
-import access.domain.Member;
-import access.repository.MemberRepositoryV2;
+import access.springdataaccess_1.domain.Member;
+import access.springdataaccess_1.repository.MemberRepositoryV2;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,13 +1,12 @@
-package access.repository;
+package access.springdataaccess_1.repository;
 
 
-import access.domain.Member;
+import access.springdataaccess_1.domain.Member;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
