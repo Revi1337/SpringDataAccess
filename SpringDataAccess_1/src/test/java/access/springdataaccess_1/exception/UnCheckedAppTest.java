@@ -1,5 +1,6 @@
 package access.springdataaccess_1.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -9,6 +10,7 @@ import java.sql.SQLException;
  */
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@Slf4j
 public class UnCheckedAppTest {
 
     ////////////////////////////////////////////////////////
@@ -89,6 +91,17 @@ public class UnCheckedAppTest {
         Controller controller = new Controller();
         assertThatThrownBy(controller::request)
                 .isInstanceOf(RuntimeSQLException.class);
+    }
+
+    @Test
+    public void printEx() {
+        CheckedAppTest.Controller controller = new CheckedAppTest.Controller();
+        try {
+            controller.request();
+        } catch (Exception e) {
+//            e.printStackTrace();
+            log.info("ex", e);
+        }
     }
 
 }
