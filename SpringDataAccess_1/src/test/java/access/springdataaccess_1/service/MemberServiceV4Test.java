@@ -2,10 +2,7 @@ package access.springdataaccess_1.service;
 
 
 import access.springdataaccess_1.domain.Member;
-import access.springdataaccess_1.repository.MemberRepository;
-import access.springdataaccess_1.repository.MemberRepositoryV3;
-import access.springdataaccess_1.repository.MemberRepositoryV4_1;
-import access.springdataaccess_1.repository.MemberRepositoryV4_2;
+import access.springdataaccess_1.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -51,7 +48,8 @@ class MemberServiceV4Test {
         @Bean
         public MemberRepository memberRepository() {
 //            return new MemberRepositoryV4_1(dataSource);
-            return new MemberRepositoryV4_2(dataSource);
+//            return new MemberRepositoryV4_2(dataSource);
+            return new MemberRepositoryV5(dataSource);
         }
 
         @Bean
