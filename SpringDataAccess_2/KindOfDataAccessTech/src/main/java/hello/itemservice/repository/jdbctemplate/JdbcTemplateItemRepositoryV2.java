@@ -45,6 +45,8 @@ public class JdbcTemplateItemRepositoryV2 implements ItemRepository {
      * 파라미터를 지정하는 방식 1 -> BeanPropertySqlParameterSource
      *
      * 1. BeanPropertySqlParameterSource 는 매개변수로 들어온 객체의 field 값을 파라미터에 매핑한다.
+     *      --> 정확히는 Getter 를 통해 매핑한다. 파라미터의 이름은 필드이름이 되고, value 는 필드의 getter 로 매핑된다.
+     *      --> 따라서 Getter 가 필요하다.
      * 2. GeneratedKeyHolder 는 auto increment 로 증가된 PK 값을 얻어오기 위함.
      *
      * @param item
@@ -140,7 +142,13 @@ public class JdbcTemplateItemRepositoryV2 implements ItemRepository {
         return jdbcTemplate.query(sql, sqlParameterSource, itemRowMapper());
     }
 
+    /**
+     * BeanPropertyRowMapper.newInstance 도 BeanPropertySqlParameterSource 와 동일하다 보면된다
+     * (사실 내부에서 Reflection 을 사용함.)
+     * V1 의 로직을 자동화시켜준것.
+     * @return
+     */
     private RowMapper<Item> itemRowMapper() {
-        return BeanPropertyRowMapper.newInstance(Item.class); // camel 변환 지원
+        return BeanPropertyRowMapper.newInstance(Item.class); // _ 표기법의 camel 변환을 지원한다.
     }
 }
