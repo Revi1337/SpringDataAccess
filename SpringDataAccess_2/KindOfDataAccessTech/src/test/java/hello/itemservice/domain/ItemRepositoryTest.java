@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.util.List;
@@ -25,21 +26,22 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 분리하지 않으면 prod 환경에서 쌓인 데이터와 같이 병합되서 테스트가 되기떄문에 문제가 발생하게 된다.
  */
 @SpringBootTest
+@Transactional
 class ItemRepositoryTest {
 
     @Autowired
     ItemRepository itemRepository;
 
-    @Autowired
-    PlatformTransactionManager transactionManager;
+//    @Autowired
+//    PlatformTransactionManager transactionManager;
+//
+//    TransactionStatus transactionStatus;
 
-    TransactionStatus transactionStatus;
-
-    @BeforeEach
-    void beforeEach() {
-        // 트랜잭션을 시작
-        this.transactionStatus = transactionManager.getTransaction(new DefaultTransactionDefinition());
-    }
+//    @BeforeEach
+//    void beforeEach() {
+//        // 트랜잭션을 시작
+//        this.transactionStatus = transactionManager.getTransaction(new DefaultTransactionDefinition());
+//    }
 
     @AfterEach
     void afterEach() {
@@ -47,8 +49,8 @@ class ItemRepositoryTest {
         if (itemRepository instanceof MemoryItemRepository) {
             ((MemoryItemRepository) itemRepository).clearStore();
         }
-        // 트랜잭션 롤백
-        transactionManager.rollback(this.transactionStatus);
+//        // 트랜잭션 롤백
+//        transactionManager.rollback(this.transactionStatus);
     }
 
     @Test
