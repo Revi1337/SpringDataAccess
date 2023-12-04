@@ -13,6 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * 테스트 Class 위에 `@SpringBootTest` 를 명시하게 되면 상위패키지로 올라가면서
+ * `@SpringBootApplication` 가 달려있는 자바파일을 찾아 해당 파일을 설정파일로 실행하게 된다.
+ *
+ * 테스트에서 중요한 것은 격리성 (Isolation) 이다. 따라서 DB 를 분리해야 한다.
+ * 분리하지 않으면 prod 환경에서 쌓인 데이터와 같이 병합되서 테스트가 되기떄문에 문제가 발생하게 된다.
+ */
 @SpringBootTest
 class ItemRepositoryTest {
 
