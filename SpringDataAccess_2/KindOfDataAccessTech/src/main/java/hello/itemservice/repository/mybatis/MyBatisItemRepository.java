@@ -4,17 +4,25 @@ import hello.itemservice.domain.Item;
 import hello.itemservice.repository.ItemRepository;
 import hello.itemservice.repository.ItemSearchCond;
 import hello.itemservice.repository.ItemUpdateDto;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Repository
 public class MyBatisItemRepository implements ItemRepository {
 
     private final ItemMapper itemMapper;
+
+    @PostConstruct
+    void init() {
+        log.info("itemMapper class = {}", itemMapper.getClass());
+    }
 
     @Override
     public Item save(Item item) {
