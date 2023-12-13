@@ -33,7 +33,7 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
 
     // MyBatis 추가 (MyBatis 는 스프링이 직접 관리하는 라이브러리가 아니기 떄문에 버전 명시가 필요)
-    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.2.0'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.1'
 
     //테스트에서 lombok 사용
     testCompileOnly 'org.projectlombok:lombok'
