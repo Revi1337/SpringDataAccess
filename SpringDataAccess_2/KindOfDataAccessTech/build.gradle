@@ -28,16 +28,21 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-    // JDBC 추가
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    //테스트에서 lombok 사용
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // h2 DB 추가
     runtimeOnly 'com.h2database:h2'
+
+    // JDBC 추가
+//    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 
     // MyBatis 추가 (MyBatis 는 스프링이 직접 관리하는 라이브러리가 아니기 떄문에 버전 명시가 필요)
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.1'
 
-    //테스트에서 lombok 사용
-    testCompileOnly 'org.projectlombok:lombok'
-    testAnnotationProcessor 'org.projectlombok:lombok'
+    // JPA, 스프링 데이터 JPA 추가 (JDBC 의존성이 필요없어짐. --> 내부에 들어가 있음.)
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 }
 
 tasks.named('bootBuildImage') {
