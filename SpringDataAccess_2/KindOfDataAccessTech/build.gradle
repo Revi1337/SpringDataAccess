@@ -7,6 +7,9 @@ plugins {
 group = 'hello'
 version = '0.0.1-SNAPSHOT'
 
+// hibernate 버전 변경
+//ext["hibernate.version"] = "5.6.5.Final"
+
 java {
     sourceCompatibility = '17'
 }
