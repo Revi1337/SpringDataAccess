@@ -3,7 +3,7 @@ package hello.itemservice.config;
 import hello.itemservice.repository.ItemRepository;
 import hello.itemservice.repository.datajpa.JpaItemRepositoryV2;
 import hello.itemservice.repository.datajpa.SpringDataJpaItemRepository;
-import hello.itemservice.repository.querydsl.JpaRepositoryV3;
+import hello.itemservice.repository.querydsl.JpaItemRepositoryV3;
 import hello.itemservice.service.ItemService;
 import hello.itemservice.service.ItemServiceV1;
 import jakarta.persistence.EntityManager;
@@ -24,7 +24,7 @@ public class QueryDslConfig {
 
     @Bean
     public ItemRepository itemRepository() {
-        return new JpaRepositoryV3(entityManager);
+        return new JpaItemRepositoryV3(entityManager);
     }
 
 }
