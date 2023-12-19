@@ -127,3 +127,16 @@ rollbackFor 와 반대 기능
 트랜잭션은 기본적으로 읽기 쓰기가 모두 가능한 트랜잭션이 생성된다.
 `readOnly=true` 를 사용하게 되면 읽기 전용 트랜잭션이 생성된다. 이 경우 `등록, 수정, 삭제가 안되고 읽기 기능만 동작`한다.
 (드라이버나 데이터베이스에 따라 정상 동작하지 않는 경우도 있다.) 그리고 `readOnly` 옵션을 사용하면 일긱에서 다양한 성능 최적화가 발생한다.
+
+```properties
+# 트랜잭션의 시작(get) 과, 끝(End). 즉 complete 을 확인 가능. (commit 이 되는지, rollback 이 되는지는 확인할 수 없음.)
+logging.level.org.springframework.transaction.interceptor=TRACE
+
+# jdbc : 현재사용되는 트랜잭션 매니저 로그 (commit 되는지 rollback 되는지 확인 가능)
+logging.level.org.springframework.jdbc.datasource.DataSourceTransactionManager=DEBUG
+
+# JPA Log
+# jpa : 현재사용되는 트랜잭션 매니저 로그 (commit 되는지 rollback 되는지 확인 가능)
+logging.level.org.springframework.orm.jpa.JpaTransactionManager=DEBUG
+logging.level.org.hibernate.resource.transaction=DEBUG
+```
