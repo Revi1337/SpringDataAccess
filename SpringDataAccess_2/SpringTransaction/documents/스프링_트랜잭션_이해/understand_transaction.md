@@ -76,4 +76,54 @@ AOP 를 적용하면 스프링은 대상 객체 대신에 프록시를 스프링
 
 - 스프링 컨테이너가 완전히 초기화되었을 때, 호출되는 ApplicationReadyEvent 를 사용하면 트랜잭션을 적용시킬 수 있다. 
 
+## 트랜잭션 옵션
 
+### value 혹은 transactionManager 옵션
+
+`@Transactional()` 의 value 혹은 transactionManager 옵션에 트랜잭션 매니저 Bean 을 지정해주면 사용할 트랜잭션 매니저를 정해줄 수 있다.
+
+> 참고로 해당 옵션은 트랜잭션 매니저가 둘 이상일때 사용한다. 그 외에는 보통 생략해준다. (default 값으로 사용)
+
+### rollbackFor 옵션
+
+- 기본적으로 트랜잭션은 RuntimeException, Error 와 그 하위 예외가 발생하는 롤백한다.
+- 체크 예외인 Exception 과 그 하위 예외들은 커밋한다.
+
+rollbackFOr 옵션을 명시하면, 추가적으로 어떤 예외가 발생할떄 롤백할지 지정할 수 있다.
+
+```java
+@Transactional(rollbackFor = Exception.class)
+```
+
+### noRollbackFor 옵션
+
+rollbackFor 와 반대 기능
+
+### propagation 옵션
+
+트랜잭션 전파에 관한 옵션. 매우 중요하기 때문에 뒤에서 설명
+
+### isolation 옵션
+
+트랜잭션 격리 수준을 지정. 기본값은 데이터베이스에서 설정한 트래잭션 격리 수준을 사용하는 `DEFAULT` 이다.
+
+- `DEFAULT` : 데이터베이스에서 설정한 격리 수준을 따른다.
+- `READ_UNCOMMITTED` : 커밋되지 않은 읽기
+- `READ_COMMITTED` : 커밋된 읽기
+- `REPEATABLE_READ` : 반복 가능한 읽기
+- `SERIALIZABLE` : 직렬화 가능
+
+### timeout 옵션
+
+트랜잭션 수행 시간에 대한 타임아웃을 초 단위로 지정한다. 기본 값은 트랜잭션 시스템의 타임아웃을 사용.
+`timeoutString` 도 있는데, 숫자 대신 문자 값으로 지정할 수 있다.
+
+### label 옵션
+
+트랜잭션 애노테이션에 있는 값을 직접 읽어서 어떤 동작을 하고 싶을 때 사용할 수 있다. 일반적으로 사용하지 않는다.
+
+### readOnly 옵션
+
+트랜잭션은 기본적으로 읽기 쓰기가 모두 가능한 트랜잭션이 생성된다.
+`readOnly=true` 를 사용하게 되면 읽기 전용 트랜잭션이 생성된다. 이 경우 `등록, 수정, 삭제가 안되고 읽기 기능만 동작`한다.
+(드라이버나 데이터베이스에 따라 정상 동작하지 않는 경우도 있다.) 그리고 `readOnly` 옵션을 사용하면 일긱에서 다양한 성능 최적화가 발생한다.
