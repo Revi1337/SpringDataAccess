@@ -140,3 +140,16 @@ logging.level.org.springframework.jdbc.datasource.DataSourceTransactionManager=D
 logging.level.org.springframework.orm.jpa.JpaTransactionManager=DEBUG
 logging.level.org.hibernate.resource.transaction=DEBUG
 ```
+
+## 예외와 트랜잭션 커밋, 롤백 - 활용
+
+- Q. 스프링은 왜 체크예외는 커밋하고 언체크(런타임) 예외는 롤백할까?
+- A. 스프링은 기본적으로 체크 예외는 비즈니스 의미가 있을 때 사용하고, 런타임(언체크) 예외는 복구 불가능한 예외로 가정하기 때문
+   - 체크 예외 : 비즈니스 의미가 있을떄 사용
+   - 언체크 예외 : 복구 불가능한 예외
+
+> 꼭 이런 정책을 따를 필요가 없음. 그냥 rollbackFor 라는 옵션을 사용해서 에크 예외도 롤백하면 된다.
+
+### 정리
+
+- 런타임 예외는 항상 롤백. 체크 예외인 경우 rollbackFor 옵션을 사용해서 비즈니스 상황에 따라서 커밋과 롤백을 선택하면 된다.
