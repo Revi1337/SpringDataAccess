@@ -51,5 +51,82 @@ o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProx
 c.e.s.propagation.BasicTxTest            : 트랜잭션 롤백 완료
 ```
 
+## 스프링 트랜잭션 전파 - 트랜잭션 두번 사용
 
+## 트랜잭션이 각각 따로 사용되는 경우
+
+커넥션은 재사용을 함. 트랜잭션이 끝나면 커넥션 풀에 커넥션을 반환하기 때문임.
+
+하지만 이 둘은 완전히 다른 커넥션임. 커넥션풀에서 커넥션을 꺼낼때 내부적으로 히카리 프록시 커넥션이라는
+객체를 생성해서 반환하기 떄문에, 이 주소가 다름 (히카리 프록시 커넥션 내부에는 실제 커넥션이 포함되어 있다.)
+
+```java
+@Test
+public void double_commit() {
+    log.info("트랜잭션1 시작");
+    TransactionStatus status = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+    log.info("트랜잭션1 커밋");
+    platformTransactionManager.commit(status);
+
+    log.info("트랜잭션2 시작");
+    TransactionStatus status2 = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+    log.info("트랜잭션2 커밋");
+    platformTransactionManager.commit(status2);
+}
+```
+
+```text
+c.e.s.propagation.BasicTxTest            : 트랜잭션1 시작
+o.s.j.d.DataSourceTransactionManager     : Creating new transaction with name [null]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+o.s.j.d.DataSourceTransactionManager     : Acquired Connection [HikariProxyConnection@237594516 wrapping conn0: url=jdbc:h2:mem:00b512b7-569c-4f38-8dcb-17d568b2d9c4 user=SA] for JDBC transaction
+o.s.j.d.DataSourceTransactionManager     : Switching JDBC Connection [HikariProxyConnection@237594516 wrapping conn0: url=jdbc:h2:mem:00b512b7-569c-4f38-8dcb-17d568b2d9c4 user=SA] to manual commit
+c.e.s.propagation.BasicTxTest            : 트랜잭션1 커밋
+o.s.j.d.DataSourceTransactionManager     : Initiating transaction commit
+o.s.j.d.DataSourceTransactionManager     : Committing JDBC transaction on Connection [HikariProxyConnection@237594516 wrapping conn0: url=jdbc:h2:mem:00b512b7-569c-4f38-8dcb-17d568b2d9c4 user=SA]
+o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProxyConnection@237594516 wrapping conn0: url=jdbc:h2:mem:00b512b7-569c-4f38-8dcb-17d568b2d9c4 user=SA] after transaction
+c.e.s.propagation.BasicTxTest            : 트랜잭션2 시작
+o.s.j.d.DataSourceTransactionManager     : Creating new transaction with name [null]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+o.s.j.d.DataSourceTransactionManager     : Acquired Connection [HikariProxyConnection@210055609 wrapping conn0: url=jdbc:h2:mem:00b512b7-569c-4f38-8dcb-17d568b2d9c4 user=SA] for JDBC transaction
+o.s.j.d.DataSourceTransactionManager     : Switching JDBC Connection [HikariProxyConnection@210055609 wrapping conn0: url=jdbc:h2:mem:00b512b7-569c-4f38-8dcb-17d568b2d9c4 user=SA] to manual commit
+c.e.s.propagation.BasicTxTest            : 트랜잭션2 커밋
+o.s.j.d.DataSourceTransactionManager     : Initiating transaction commit
+o.s.j.d.DataSourceTransactionManager     : Committing JDBC transaction on Connection [HikariProxyConnection@210055609 wrapping conn0: url=jdbc:h2:mem:00b512b7-569c-4f38-8dcb-17d568b2d9c4 user=SA]
+o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProxyConnection@210055609 wrapping conn0: url=jdbc:h2:mem:00b512b7-569c-4f38-8dcb-17d568b2d9c4 user=SA] after transaction
+```
+
+## 두개의 트랜잭션 - 커밋, 롤백
+
+```java
+@Test
+public void double_commit_rollback() {
+    log.info("트랜잭션1 시작");
+    TransactionStatus status = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+    log.info("트랜잭션1 커밋");
+    platformTransactionManager.commit(status);
+
+    log.info("트랜잭션2 시작");
+    TransactionStatus status2 = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+    log.info("트랜잭션2 롤백");
+    platformTransactionManager.rollback(status2);
+}
+```
+
+```text
+c.e.s.propagation.BasicTxTest            : 트랜잭션1 시작
+o.s.j.d.DataSourceTransactionManager     : Creating new transaction with name [null]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+o.s.j.d.DataSourceTransactionManager     : Acquired Connection [HikariProxyConnection@116806060 wrapping conn0: url=jdbc:h2:mem:68fe3ed2-48f1-4a44-989a-00c0ebdcb75d user=SA] for JDBC transaction
+o.s.j.d.DataSourceTransactionManager     : Switching JDBC Connection [HikariProxyConnection@116806060 wrapping conn0: url=jdbc:h2:mem:68fe3ed2-48f1-4a44-989a-00c0ebdcb75d user=SA] to manual commit
+c.e.s.propagation.BasicTxTest            : 트랜잭션1 커밋
+o.s.j.d.DataSourceTransactionManager     : Initiating transaction commit
+o.s.j.d.DataSourceTransactionManager     : Committing JDBC transaction on Connection [HikariProxyConnection@116806060 wrapping conn0: url=jdbc:h2:mem:68fe3ed2-48f1-4a44-989a-00c0ebdcb75d user=SA]
+o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProxyConnection@116806060 wrapping conn0: url=jdbc:h2:mem:68fe3ed2-48f1-4a44-989a-00c0ebdcb75d user=SA] after transaction
+c.e.s.propagation.BasicTxTest            : 트랜잭션2 시작
+o.s.j.d.DataSourceTransactionManager     : Creating new transaction with name [null]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+o.s.j.d.DataSourceTransactionManager     : Acquired Connection [HikariProxyConnection@674349432 wrapping conn0: url=jdbc:h2:mem:68fe3ed2-48f1-4a44-989a-00c0ebdcb75d user=SA] for JDBC transaction
+o.s.j.d.DataSourceTransactionManager     : Switching JDBC Connection [HikariProxyConnection@674349432 wrapping conn0: url=jdbc:h2:mem:68fe3ed2-48f1-4a44-989a-00c0ebdcb75d user=SA] to manual commit
+c.e.s.propagation.BasicTxTest            : 트랜잭션2 롤백
+o.s.j.d.DataSourceTransactionManager     : Initiating transaction rollback
+o.s.j.d.DataSourceTransactionManager     : Rolling back JDBC transaction on Connection [HikariProxyConnection@674349432 wrapping conn0: url=jdbc:h2:mem:68fe3ed2-48f1-4a44-989a-00c0ebdcb75d user=SA]
+o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProxyConnection@674349432 wrapping conn0: url=jdbc:h2:mem:68fe3ed2-48f1-4a44-989a-00c0ebdcb75d user=SA] after transaction
+```
 

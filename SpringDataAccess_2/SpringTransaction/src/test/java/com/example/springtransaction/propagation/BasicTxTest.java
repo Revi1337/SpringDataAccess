@@ -50,4 +50,30 @@ public class BasicTxTest {
         log.info("트랜잭션 롤백 완료");
     }
 
+    @Test
+    public void double_commit() {
+        log.info("트랜잭션1 시작");
+        TransactionStatus status = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("트랜잭션1 커밋");
+        platformTransactionManager.commit(status);
+
+        log.info("트랜잭션2 시작");
+        TransactionStatus status2 = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("트랜잭션2 커밋");
+        platformTransactionManager.commit(status2);
+    }
+
+    @Test
+    public void double_commit_rollback() {
+        log.info("트랜잭션1 시작");
+        TransactionStatus status = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("트랜잭션1 커밋");
+        platformTransactionManager.commit(status);
+
+        log.info("트랜잭션2 시작");
+        TransactionStatus status2 = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("트랜잭션2 롤백");
+        platformTransactionManager.rollback(status2);
+    }
+
 }
