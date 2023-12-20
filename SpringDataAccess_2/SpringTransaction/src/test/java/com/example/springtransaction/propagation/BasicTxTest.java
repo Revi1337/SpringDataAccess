@@ -1,6 +1,7 @@
 package com.example.springtransaction.propagation;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -75,5 +76,22 @@ public class BasicTxTest {
         log.info("트랜잭션2 롤백");
         platformTransactionManager.rollback(status2);
     }
+    
+     @Test
+     @DisplayName("외부 트랜잭션이 수행중인데, 내부 트랜잭션을 추가로 수행 --> 내부 트랜잭션은 외부 트랜잭션에 참여.")
+     public void inner_commit() {
+         log.info("외부 트랜잭션 시작");
+         TransactionStatus outer = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+         log.info("outer.isNewTransaction() = {}", outer.isNewTransaction()); // 처음 수행된 트랜잭션이냐?
+
+         log.info("내부 트랜잭션 시작");
+         TransactionStatus inner = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+         log.info("inner.isNewTransaction() = {}", inner.isNewTransaction()); // 처음 수행된 트랜잭션이냐?
+         log.info("내부 트랜잭션 커밋");
+         platformTransactionManager.commit(inner);
+
+         log.info("외부 트랜잭션 커밋");
+         platformTransactionManager.commit(outer);
+     }
 
 }
