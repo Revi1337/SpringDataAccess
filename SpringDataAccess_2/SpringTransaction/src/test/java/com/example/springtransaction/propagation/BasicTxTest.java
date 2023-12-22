@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.DefaultTransactionAttribute;
@@ -93,5 +94,22 @@ public class BasicTxTest {
          log.info("외부 트랜잭션 커밋");
          platformTransactionManager.commit(outer);
      }
+
+    @Test
+    @DisplayName("외부트랜잭션 롤백과 내부트랜잭션 커밋")
+    public void outer_rollback() {
+        log.info("외부 트랜잭션 시작");
+        TransactionStatus outer = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("outer.isNewTransaction() = {}", outer.isNewTransaction()); // 처음 수행된 트랜잭션이냐?
+
+        log.info("내부 트랜잭션 시작");
+        TransactionStatus inner = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("inner.isNewTransaction() = {}", inner.isNewTransaction()); // 처음 수행된 트랜잭션이냐?
+        log.info("내부 트랜잭션 커밋");
+        platformTransactionManager.commit(inner);
+
+        log.info("외부 트랜잭션 롤백");
+        platformTransactionManager.rollback(outer);
+    }
 
 }

@@ -232,3 +232,40 @@ o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProx
 - 이렇게 트랜잭션이 내부에서 추가로 사용되면 트랜잭션 매니저에 커밋하는 것이 항상 물리 커밋으로 이어지지 않는다. 그래서 이 경우 논리 트랜잭션과 물리 트랜잭션으로 나누게 된다.
 또는 외부 트랜잭션과 내부 트랜잭션으로 나누어 설명하기도 한다.
 - 트랜잭션이 내부에서 추가로 사용되면, 트랜잭션 매니저를 통해 논리 트랜잭션을 관리하고, 모든 논리 트랜잭션이 커밋되면 물리 트랜잭션이 커밋된다고 이해하면 된다.
+
+### 내부 트랜잭션은 커밋되는데, 외부 트랜잭션이 롤백되는 상황 (외부 롤백)
+
+```java
+@Test
+    @DisplayName("외부트랜잭션 롤백과 내부트랜잭션 커밋")
+    public void outer_rollback() {
+        log.info("외부 트랜잭션 시작");
+        TransactionStatus outer = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("outer.isNewTransaction() = {}", outer.isNewTransaction()); // 처음 수행된 트랜잭션이냐?
+
+        log.info("내부 트랜잭션 시작");
+        TransactionStatus inner = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("inner.isNewTransaction() = {}", inner.isNewTransaction()); // 처음 수행된 트랜잭션이냐?
+        log.info("내부 트랜잭션 커밋");
+        platformTransactionManager.commit(inner);
+
+        log.info("외부 트랜잭션 롤백");
+        platformTransactionManager.rollback(outer);
+    }
+```
+
+```text
+c.e.s.propagation.BasicTxTest            : 외부 트랜잭션 시작
+o.s.j.d.DataSourceTransactionManager     : Creating new transaction with name [null]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+o.s.j.d.DataSourceTransactionManager     : Acquired Connection [HikariProxyConnection@784121757 wrapping conn0: url=jdbc:h2:mem:f837beab-5235-4468-a5bf-1d1d83db509f user=SA] for JDBC transaction
+o.s.j.d.DataSourceTransactionManager     : Switching JDBC Connection [HikariProxyConnection@784121757 wrapping conn0: url=jdbc:h2:mem:f837beab-5235-4468-a5bf-1d1d83db509f user=SA] to manual commit
+c.e.s.propagation.BasicTxTest            : outer.isNewTransaction() = true
+c.e.s.propagation.BasicTxTest            : 내부 트랜잭션 시작
+o.s.j.d.DataSourceTransactionManager     : Participating in existing transaction
+c.e.s.propagation.BasicTxTest            : inner.isNewTransaction() = false
+c.e.s.propagation.BasicTxTest            : 내부 트랜잭션 커밋
+c.e.s.propagation.BasicTxTest            : 외부 트랜잭션 롤백
+o.s.j.d.DataSourceTransactionManager     : Initiating transaction rollback
+o.s.j.d.DataSourceTransactionManager     : Rolling back JDBC transaction on Connection [HikariProxyConnection@784121757 wrapping conn0: url=jdbc:h2:mem:f837beab-5235-4468-a5bf-1d1d83db509f user=SA]
+o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProxyConnection@784121757 wrapping conn0: url=jdbc:h2:mem:f837beab-5235-4468-a5bf-1d1d83db509f user=SA] after transaction
+```
