@@ -353,3 +353,148 @@ o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProx
 > 애플리케이션 개발에서 중요한 기본 원칙은 모호함을 제거하는 것이다. 개발은 명확해야 한다. 이렇게 커밋을 호
 출했는데, 내부에서 롤백이 발생한 경우 모호하게 두면 아주 심각한 문제가 발생한다. 이렇게 기대한 결과가 다른
 경우 예외를 발생시켜서 명확하게 문제를 알려주는 것이 좋은 설계이다.
+
+### REQUIRES_NEW
+
+외부 트랜잭션과 내부 트랜잭션을 완전히 분리해서 사용하는 방법에 대해 알아보자. `외부 트랜잭션과 내부 트랜잭션을 완전히
+분리해서 각각 별도의 물리 트랜잭션을 사용하는 방법`이다. 그래서 커밋과 롤백도 각각 별도로 이루어지게 된다.
+
+<br>
+
+이 방법은 내부 트랜잭션에 문제가 발생해도, 외부 트랜잭션에는 영향을 주지 않는다. 반대로 외부 트랜잭션에 문제가 발생해도 내부 트랜잭션에
+문제를 주지 않는다. 이 방법을 사용하는 구체적인 예는 이후에 알아보고 작동 원리를 알아보자.
+
+![img_9.png](img_9.png)
+
+- 이렇게 물리 트랜잭션을 분리하려면 `내부 트랜잭션을 시작할 때` `REQUIRES_NEW` 옵션을 사용하면 된다.
+- 외부 트랜잭션과 내부 트랜잭션이 각각 별도의 물리 트랜잭션을 가진다.
+- 별도의 물리 트랜잭션을 가진다는 뜻은 `DB 커넥션을 따로 사용한다는 뜻`이다.
+- 이 경우 내부 트랜잭션이 롤백되면서 로직 2 가 롤백되어도 로직 1에서 저장한 데이터는 영향을 주지 않는다.
+- 최종적으로 로직2 는 롤백되고, 로직1 은 커밋된다.
+
+<br>
+
+```java
+@Test
+@DisplayName("외부트랜잭션 커밋과 내부트랜잭션 롤백 --> REQUIRES_NEW 로 기존의 물리 트랜잭션이 있어도 새로운 트랜잭션을 생성")
+public void inner_rollback_requires_new() {
+  log.info("외부 트랜잭션 시작");
+  TransactionStatus outer = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+  log.info("outer.isNewTransaction() = {}", outer.isNewTransaction());
+
+  log.info("내부 트랜잭션 시작");
+  DefaultTransactionAttribute definition = new DefaultTransactionAttribute();
+  definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);  // 트랜잭션 전파 옵션을 REQUIRES_NEW 로 설정 --> 기존 물리 트랜잭션이 존재해도 새로운 물리 트랜잭션을 만든다.
+  TransactionStatus inner = platformTransactionManager.getTransaction(definition);    // Suspending current transaction, creating new transaction with name [null]
+  log.info("inner.isNewTransaction() = {}", inner.isNewTransaction());
+
+  log.info("내부 트랜잭션 롤백");
+  platformTransactionManager.rollback(inner);
+
+  log.info("외부 트랜잭션 커밋");
+  platformTransactionManager.commit(outer);                                           // Resuming suspended transaction after completion of inner transaction
+}
+```
+
+```text
+외부 트랜잭션 시작
+c.e.s.propagation.BasicTxTest            : 외부 트랜잭션 시작
+o.s.j.d.DataSourceTransactionManager     : Creating new transaction with name [null]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+o.s.j.d.DataSourceTransactionManager     : Acquired Connection [HikariProxyConnection@481896873 wrapping conn0: url=jdbc:h2:mem:6b66bff2-848b-4963-ac47-64423460b120 user=SA] for JDBC transaction
+o.s.j.d.DataSourceTransactionManager     : Switching JDBC Connection [HikariProxyConnection@481896873 wrapping conn0: url=jdbc:h2:mem:6b66bff2-848b-4963-ac47-64423460b120 user=SA] to manual commit
+c.e.s.propagation.BasicTxTest            : outer.isNewTransaction() = true
+
+내부 트랜잭션 시작
+c.e.s.propagation.BasicTxTest            : 내부 트랜잭션 시작
+o.s.j.d.DataSourceTransactionManager     : Suspending current transaction, creating new transaction with name [null]
+o.s.j.d.DataSourceTransactionManager     : Acquired Connection [HikariProxyConnection@1352701387 wrapping conn1: url=jdbc:h2:mem:6b66bff2-848b-4963-ac47-64423460b120 user=SA] for JDBC transaction
+o.s.j.d.DataSourceTransactionManager     : Switching JDBC Connection [HikariProxyConnection@1352701387 wrapping conn1: url=jdbc:h2:mem:6b66bff2-848b-4963-ac47-64423460b120 user=SA] to manual commit
+c.e.s.propagation.BasicTxTest            : inner.isNewTransaction() = true
+
+내부 트랜잭션 롤백
+c.e.s.propagation.BasicTxTest            : 내부 트랜잭션 롤백
+o.s.j.d.DataSourceTransactionManager     : Initiating transaction rollback
+o.s.j.d.DataSourceTransactionManager     : Rolling back JDBC transaction on Connection [HikariProxyConnection@1352701387 wrapping conn1: url=jdbc:h2:mem:6b66bff2-848b-4963-ac47-64423460b120 user=SA]
+o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProxyConnection@1352701387 wrapping conn1: url=jdbc:h2:mem:6b66bff2-848b-4963-ac47-64423460b120 user=SA] after transaction
+o.s.j.d.DataSourceTransactionManager     : Resuming suspended transaction after completion of inner transaction
+
+외부 트랜잭션 커밋
+
+c.e.s.propagation.BasicTxTest            : 외부 트랜잭션 커밋
+o.s.j.d.DataSourceTransactionManager     : Initiating transaction commit
+o.s.j.d.DataSourceTransactionManager     : Committing JDBC transaction on Connection [HikariProxyConnection@481896873 wrapping conn0: url=jdbc:h2:mem:6b66bff2-848b-4963-ac47-64423460b120 user=SA]
+o.s.j.d.DataSourceTransactionManager     : Releasing JDBC Connection [HikariProxyConnection@481896873 wrapping conn0: url=jdbc:h2:mem:6b66bff2-848b-4963-ac47-64423460b120 user=SA] after transaction
+```
+
+<br>
+
+**외부 트랜잭션 시작**
+- 외부 트랜잭션을 시작하면서 conn0 를 획득하고 manual commit 으로 변경해서 물리 트랜잭션을 시작한다.
+- 외부 트랜잭션은 신규 트랜잭션이다.( outer.isNewTransaction()=true )
+
+**내부 트랜잭션 시작**
+- 내부 트랜잭션을 시작하면서 conn1 를 획득하고 manual commit 으로 변경해서 물리 트랜잭션을 시작한다.
+- 내부 트랜잭션은 외부 트랜잭션에 참여하는 것이 아니라, PROPAGATION_REQUIRES_NEW 옵션을 사용했기 때문에 완전히 새로운 신규 트랜잭션으로 생성된다.( inner.isNewTransaction()=true )
+
+**내부 트랜잭션 롤백**
+- 내부 트랜잭션을 롤백한다.
+- 내부 트랜잭션은 신규 트랜잭션이기 때문에 실제 물리 트랜잭션을 롤백한다.
+- 내부 트랜잭션은 conn1 을 사용하므로 conn1 에 물리 롤백을 수행한다.
+
+**외부 트랜잭션 커밋**
+- 외부 트랜잭션을 커밋한다.
+- 외부 트랜잭션은 신규 트랜잭션이기 때문에 실제 물리 트랜잭션을 커밋한다.
+- 외부 트랜잭션은 conn0 를 사용하므로 conn0 에 물리 커밋을 수행한다.
+
+<br>
+
+#### 요청 흐름 - REQUIRES_NEW
+
+![img_10.png](img_10.png)
+
+**요청 흐름 - 외부 트랜잭션**
+
+1. txManager.getTransaction() 를 호출해서 외부 트랜잭션을 시작한다.
+2. 트랜잭션 매니저는 데이터소스를 통해 커넥션을 생성한다.
+3. 생성한 커넥션을 수동 커밋 모드( setAutoCommit(false) )로 설정한다. - 물리 트랜잭션 시작
+4. 트랜잭션 매니저는 트랜잭션 동기화 매니저에 커넥션을 보관한다.
+5. 트랜잭션 매니저는 트랜잭션을 생성한 결과를 TransactionStatus 에 담아서 반환하는데, 여기에 신규 트랜잭션의 여부가 담겨 있다. isNewTransaction 를 통해 신규 트랜잭션 여부를 확인할 수 있다. 트랜 
+잭션을 처음 시작했으므로 신규 트랜잭션이다.( true )
+6. 로직1이 사용되고, 커넥션이 필요한 경우 트랜잭션 동기화 매니저를 통해 트랜잭션이 적용된 커넥션을 획득해서 사용한다.
+
+<br>
+
+**요청 흐름 - 내부 트랜잭션** 
+7. REQUIRES_NEW 옵션과 함께 txManager.getTransaction() 를 호출해서 내부 트랜잭션을 시작한다.
+   트랜잭션 매니저는 REQUIRES_NEW 옵션을 확인하고, 기존 트랜잭션에 참여하는 것이 아니라 새로운 트랜잭션을 시작한다.
+8. 트랜잭션 매니저는 데이터소스를 통해 커넥션을 생성한다.
+9. 생성한 커넥션을 수동 커밋 모드( setAutoCommit(false) )로 설정한다. - 물리 트랜잭션 시작
+10. 트랜잭션 매니저는 트랜잭션 동기화 매니저에 커넥션을 보관한다. 이때 con1 은 잠시 보류되고, 지금부터는 con2 가 사용된다. (내부 트랜잭션을 완료할 때 까지 con2 가 사용된다.)
+11. 트랜잭션 매니저는 신규 트랜잭션의 생성한 결과를 반환한다. isNewTransaction == true
+12. 로직2가 사용되고, 커넥션이 필요한 경우 트랜잭션 동기화 매니저에 있는 con2 커넥션을 획득해서 사용한다.
+
+#### 응답 흐름 - REQUIRES_NEW
+
+![img_11.png](img_11.png)
+
+**응답 흐름 - 내부 트랜잭션**
+1. 로직2가 끝나고 트랜잭션 매니저를 통해 내부 트랜잭션을 롤백한다. (로직2에 문제가 있어서 롤백한다고 가 정한다.)
+2. 트랜잭션 매니저는 롤백 시점에 신규 트랜잭션 여부에 따라 다르게 동작한다. 현재 내부 트랜잭션은 신규 트랜잭션이다. 따라서 실제 롤백을 호출한다.
+3. 내부 트랜잭션이 con2 물리 트랜잭션을 롤백한다.
+   트랜잭션이 종료되고, con2 는 종료되거나, 커넥션 풀에 반납된다.
+   이후에 con1 의 보류가 끝나고, 미루어두었던 다시 con1 을 사용한다.
+
+<br>
+
+**응답 흐름 - 외부 트랜잭션**
+4. 외부 트랜잭션에 커밋을 요청한다.
+5. 외부 트랜잭션은 신규 트랜잭션이기 때문에 물리 트랜잭션을 커밋한다.
+6. 이때 rollbackOnly 설정을 체크한다. rollbackOnly 설정이 없으므로 커밋한다.
+7. 본인이 만든 con1 커넥션을 통해 물리 트랜잭션을 커밋한다.
+   트랜잭션이 종료되고, con1 은 종료되거나, 커넥션 풀에 반납된다.
+
+<br>
+
+**정리**
+- REQUIRES_NEW 옵션을 사용하면 물리 트랜잭션이 명확하게 분리된다.
+- REQUIRES_NEW 를 사용하면 데이터베이스 커넥션이 동시에 2개 사용된다는 점을 주의해야 한다.

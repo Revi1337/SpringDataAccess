@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.interceptor.DefaultTransactionAttribute;
@@ -131,6 +132,26 @@ public class BasicTxTest {
         log.info("외부 트랜잭션 커밋");
         assertThatThrownBy(() -> platformTransactionManager.commit(outer)) // Global transaction is marked as rollback-only but transactional code requested commit
                 .isInstanceOf(UnexpectedRollbackException.class);
+    }
+
+    @Test
+    @DisplayName("외부트랜잭션 커밋과 내부트랜잭션 롤백 --> REQUIRES_NEW 로 기존의 물리 트랜잭션이 있어도 새로운 트랜잭션을 생성")
+    public void inner_rollback_requires_new() {
+        log.info("외부 트랜잭션 시작");
+        TransactionStatus outer = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("outer.isNewTransaction() = {}", outer.isNewTransaction());
+
+        log.info("내부 트랜잭션 시작");
+        DefaultTransactionAttribute definition = new DefaultTransactionAttribute();
+        definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);  // 트랜잭션 전파 옵션을 REQUIRES_NEW 로 설정 --> 기존 물리 트랜잭션이 존재해도 새로운 물리 트랜잭션을 만든다.
+        TransactionStatus inner = platformTransactionManager.getTransaction(definition);    // Suspending current transaction, creating new transaction with name [null]
+        log.info("inner.isNewTransaction() = {}", inner.isNewTransaction());
+
+        log.info("내부 트랜잭션 롤백");
+        platformTransactionManager.rollback(inner);
+
+        log.info("외부 트랜잭션 커밋");
+        platformTransactionManager.commit(outer);                                           // Resuming suspended transaction after completion of inner transaction
     }
 
 }
