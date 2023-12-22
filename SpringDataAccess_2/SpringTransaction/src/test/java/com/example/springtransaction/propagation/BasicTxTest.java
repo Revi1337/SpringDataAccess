@@ -11,10 +11,13 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.interceptor.DefaultTransactionAttribute;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import javax.sql.DataSource;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Slf4j
 @SpringBootTest
@@ -110,6 +113,24 @@ public class BasicTxTest {
 
         log.info("외부 트랜잭션 롤백");
         platformTransactionManager.rollback(outer);
+    }
+
+    @Test
+    @DisplayName("외부트랜잭션 커밋과 내부트랜잭션 롤백")
+    public void inner_rollback() {
+        log.info("외부 트랜잭션 시작");
+        TransactionStatus outer = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("outer.isNewTransaction() = {}", outer.isNewTransaction()); // 처음 수행된 트랜잭션이냐?
+
+        log.info("내부 트랜잭션 시작");
+        TransactionStatus inner = platformTransactionManager.getTransaction(new DefaultTransactionAttribute());
+        log.info("inner.isNewTransaction() = {}", inner.isNewTransaction()); // 처음 수행된 트랜잭션이냐?
+        log.info("내부 트랜잭션 롤백");
+        platformTransactionManager.rollback(inner); // Participating transaction failed - marking existing transaction as rollback-only --> 내부 트랜잭션을 롤백하면 실제 물리 트랜잭션은 롤백하지 않는다. 대신에 기존 트랜잭션을 rollback-only 를 표시한다.
+                                                    // Setting JDBC transaction [HikariProxyConnection@1926138523 wrapping conn0: url=jdbc:h2:mem:78a8e7d6-eebc-4461-bfe7-8e561b003506 user=SA] rollback-only
+        log.info("외부 트랜잭션 커밋");
+        assertThatThrownBy(() -> platformTransactionManager.commit(outer)) // Global transaction is marked as rollback-only but transactional code requested commit
+                .isInstanceOf(UnexpectedRollbackException.class);
     }
 
 }
